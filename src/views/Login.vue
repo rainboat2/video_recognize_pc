@@ -8,13 +8,13 @@
         </el-row>
 
         <el-card id="login-card"
-                 v-if="showLoginOrRegisterCard"
+                 v-show="showLoginOrRegisterCard"
                  :body-style="{ padding: '15px'}"
                  shadow="always">
             <h1>登陆</h1>
             <el-form label-width="60px" label-position="left" :rules="rules" ref="loginForm" :model="user">
                 <el-form-item label="邮箱" :inline="true" prop="email">
-                    <el-input v-model="user.email" placeholder="请输入账号"></el-input>
+                    <el-input v-model="user.email" placeholder="请输入邮箱"></el-input>
                 </el-form-item>
 
                 <el-form-item label="密码" prop="password">
@@ -33,24 +33,24 @@
 
         <el-card id="register-card"
                  :body-style="{ padding: '15px'}"
-                 v-if="!showLoginOrRegisterCard"
+                 v-show="!showLoginOrRegisterCard"
                  shadow="always">
             <h1>注册</h1>
-            <el-form label-width="60px" label-position="left" :rules="rules" ref="registerForm" :model="user">
+            <el-form label-width="60px" label-position="left" :rules="rules" ref="registerForm" :model="registerData">
                 <el-form-item label="邮箱" :inline="true" prop="email">
-                    <el-input v-model="user.email" placeholder="请输入邮箱"></el-input>
+                    <el-input v-model="registerData.email" placeholder="请输入邮箱"></el-input>
                 </el-form-item>
 
                 <el-form-item label="密码" :inline="true" prop="password">
-                    <el-input v-model="user.password" placeholder="请输入密码" show-password></el-input>
+                    <el-input v-model="registerData.password" placeholder="请输入密码" show-password></el-input>
                 </el-form-item>
 
                 <el-form-item label="电话" :inline="true" prop="phone">
-                    <el-input v-model="user.phone" placeholder="请输入手机号"></el-input>
+                    <el-input v-model="registerData.phone" placeholder="请输入手机号"></el-input>
                 </el-form-item>
 
                 <el-form-item label="昵称" :inline="true" prop="name">
-                    <el-input v-model="user.name" placeholder="请输入昵称"></el-input>
+                    <el-input v-model="registerData.name" placeholder="请输入昵称"></el-input>
                 </el-form-item>
 
                 <el-form-item>
@@ -94,8 +94,9 @@
                 }
             };
             return{
-                user: {email: '', password: '', phone: '', name: ''},
-                showLoginOrRegisterCard: true,
+                user: {email: '', password: ''},
+                registerData: {email: '', password: '', phone: '', name: ''},
+                showLoginOrRegisterCard: false,
                 rules:{
                     email:[
                         {required: true, message: '邮箱不能为空', trigger: 'blur'},
@@ -151,10 +152,12 @@
                         this.$message.warning("请正确填写信息");
                         return;
                     }
-                    this.axios.post(this.api.registerUrl, this.user).then(r => {
+                    this.axios.post(this.api.registerUrl, this.registerData).then(r => {
                         const status = r.data.status;
                         if (status === 1){
                             this.$message.info("注册成功，前往登陆页面");
+                            this.user.email = this.registerData.email;
+                            this.user.password = this.registerData.password;
                             this.switchCard();
                         }else{
                             this.$message.error(r.data.msg);

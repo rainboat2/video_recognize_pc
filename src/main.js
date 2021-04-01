@@ -11,9 +11,7 @@ import 'element-ui/lib/theme-chalk/index.css';
 import echarts from 'echarts'
 
 import {api} from '@/js/api'
-import VideoPlayer from 'vue-video-player'
-import 'vue-video-player/src/custom-theme.css'
-import 'video.js/dist/video-js.css'
+import {tools} from '@/js/tools'
 
 
 // 引入全局css
@@ -26,8 +24,7 @@ axios.defaults.withCredentials = true;
 Vue.config.productionTip = false
 Vue.prototype.echarts = echarts
 Vue.prototype.api = api;
-
-Vue.use(VideoPlayer)
+Vue.prototype.tools = tools;
 
 
 new Vue({

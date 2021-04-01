@@ -1,3 +1,4 @@
+// const host = "http://172.22.84.47:8080";
 const host = "http://localhost:8080";
 
 export const api = {

@@ -47,12 +47,15 @@
         <div :class="containerClass">
             <router-view/>
         </div>
+        <upload-card ref="upload-card"></upload-card>
     </div>
 </template>
 
 <script>
+    import UploadCard from "@/components/UploadCard";
     export default {
         name: "Frame",
+        components: {UploadCard},
         data(){
             return {
                 navItem:[
@@ -135,6 +138,10 @@
                     isLogin = false
                 return isLogin === "true";
             },
+            uploadVideo(videoFile, parentDirectoryId, callback){
+                // 调用upload-card子组件，完成对视频文件的上传
+                this.$refs['upload-card'].uploadVideo(videoFile, parentDirectoryId, callback);
+            }
         }
     }
 </script>

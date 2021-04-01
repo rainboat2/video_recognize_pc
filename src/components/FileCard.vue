@@ -14,6 +14,7 @@
         <el-image
                 style="width: 100px;height: 100px"
                 fit="contain"
+                @click="previewVideo"
                 :src="cardImage">
         </el-image>
         <br>
@@ -65,6 +66,17 @@
                 <el-button type="primary" @click="selectDirectoryDialogVisible = false;">确 定</el-button>
             </span>
         </el-dialog>
+
+        <el-dialog title="视频预览"
+                   center
+                   :append-to-body="true"
+                   width="50%"
+                   :visible.sync="showPreviewVideoDialog">
+            <video v-if="showPreviewVideoDialog" :src="previewVideoUrl"  width="100%" controls preload></video>
+            <span slot="footer" class="dialog-footer">
+                <el-button type="primary" @click="showPreviewVideoDialog = false;goToOnlineRecognizePage()">前往分析页面</el-button>
+            </span>
+        </el-dialog>
     </div>
 </template>
 
@@ -77,6 +89,8 @@
                 directoryImage: require("../assets/directoryImage.png"),
                 dropdownButtonClass: 'dropdown-button-hidden',
                 showRenameDialog: false,
+                showPreviewVideoDialog: false,
+                previewVideoUrl: '',
                 deleteDialogVisible: false,
                 selectDirectoryDialogVisible: false,
                 newFile: {name: '', suffix: ''},
@@ -125,6 +139,20 @@
                         this.$message.error("未知的文件操作指令");
                         break;
                 }
+            },
+            previewVideo(){
+                if (this.isDirectory)
+                    return ;
+                this.showPreviewVideoDialog = true;
+                this.previewVideoUrl = this.api.resPath + "/" + this.file.filePath;
+            },
+            goToOnlineRecognizePage(){
+                this.$router.push({
+                    name: 'OnlineRecognize',
+                    params: {
+                        video: this.file
+                    }
+                })
             },
             rename(){
                 this.$refs['rename-form'].validate(valid => {

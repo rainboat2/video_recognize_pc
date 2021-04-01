@@ -3,7 +3,7 @@
         <p class="title">视频管理</p>
         <el-row>
             <el-col :span="2">
-                <el-button type="primary" size="small" @click="clickUploadButton">
+                <el-button type="primary" size="small" onclick="document.getElementById('upload-button').click()">
                     上传<i class="el-icon-upload el-icon--right"></i>
                 </el-button>
                 <input id="upload-button" type="file" style="display: none" @change="handleUploadChange" accept=".mp4"/>
@@ -31,7 +31,7 @@
             </el-col>
             <el-col :span="6" :offset="13">
                 <div class="progress-area">
-                    <span>存储空间使用量：10.5G/21G</span>
+                    <span>存储空间使用量：{{ownFileSize}}/21GB</span>
                     <el-progress :percentage="Number.parseFloat(((user.ownFileSize / user.fileCapacity) * 100).toFixed(2))">
                     </el-progress>
                 </div>
@@ -63,21 +63,7 @@
                    :is-directory="true">
         </file-card>
 
-        <el-card class="upload-window" :body-style="{padding: 0}" v-if="videoInUploading.length > 0">
-            <el-table :data="videoInUploading">
-                <el-table-column
-                        prop="name"
-                        width="100px"
-                        label="文件名">
-                </el-table-column>
-                <el-table-column
-                        label="上传进度">
-                    <template slot-scope="scope">
-                        <el-progress :percentage="percentages[scope.row.id]"></el-progress>
-                    </template>
-                </el-table-column>
-            </el-table>
-        </el-card>
+        <p class="empty-info" v-if="files.length === 0 && directories.length === 0">当前文件夹为空</p>
     </div>
 </template>
 
@@ -91,24 +77,37 @@
                 currentPath: [{id: -1, name: '全部文件', depth: -1}],
                 files:[{id: 1, name: '测试文件', coverImagePath: 'default.png'}],
                 directories: [{id: 1, name: '测试文件'}],
-                cnt: 1,
-                percentages: {},
-                videoInUploading: [],
                 user: {fileCapacity: 21474836480, ownFileSize: 0},
                 newDirectory: {name: ''},
                 showDirectoryNameDialog: false,
                 rules:{
                     name: [
                         {required: true, message: '文件夹名不能为空', trigger: 'blur'},
-                        {min: 2, max: 16, message: '昵称长度应在2～16个字符之间', trigger: 'blur'}
+                        {min: 2, max: 16, message: '名称长度应在2～16个字符之间', trigger: 'blur'}
                     ],
                 }
             }
         },
         computed:{
           currentDirectory: function () {
+              // 依据路径，计算出当前文件夹
               const len = this.currentPath.length;
               return this.currentPath[len - 1];
+          },
+          ownFileSize: function () {
+              // fileSize的单位为B
+              let fileSize = this.user.ownFileSize;
+              const oneKB = 1024;
+              const oneMB = 1024 * oneKB;
+              const oneGB = 1024 * oneMB;
+              if (fileSize < oneKB)
+                  return fileSize + "B";
+              else if (fileSize < oneMB)
+                  return (fileSize / oneKB).toFixed(1) + "KB";
+              else if (fileSize < oneGB)
+                  return (fileSize / oneMB).toFixed(1) + "MB";
+              else
+                  return (fileSize / oneGB).toFixed(1) + "GB";
           }
         },
         created() {
@@ -116,80 +115,30 @@
         },
         methods:{
             refreshFiles(){
-                this.getCurrentFilesAndDirectories();
-                this.getCurrentUser();
-            },
-            getCurrentUser(){
-                this.axios.get(this.api.currentUserUrl).then(r => {
-                    if (r.data.status === 1){
-                        this.user = r.data.user;
-                    }else{
-                        this.$message.error(r.data.msg);
-                    }
-                })
-            },
-            clickUploadButton(){
-                document.getElementById('upload-button').click();
-            },
-            getCurrentFilesAndDirectories(){
+                // 刷新当前文件夹下的所有文件和文件夹
                 this.axios.get(this.api.getFilesAndDirectoriesUrl, {
                     params: {parentId: this.currentDirectory.id}
                 }).then(r => {
                     if (r.data.status === 1){
                         this.files = r.data.files;
                         this.directories = r.data.directories;
+                        this.user = r.data.user;
                     }else{
                         this.$message.warning(r.data.msg);
                     }
                 })
             },
             handleUploadChange(event){
-                const video = event.target.files[0];
+                let videoFile = event.target.files[0];
+                // 如果名称已经存在，则重命名文件
+                videoFile = new File([videoFile], this.renameIfSame(videoFile.name, this.files), {type: videoFile.type});
                 // 检查上传的视频是否小于100MB
-                console.log(video);
-                console.log(video.name);
-                if ((video.size / 1048576) < 100){
-                    this.uploadVideo(video);
+                if ((videoFile.size / 1048576) < 100){
+                    this.$parent.uploadVideo(videoFile, this.currentDirectory.id, () => {this.refreshFiles()});
                 }else{
                     this.$message.info("上传的文件必须要小于100MB");
                 }
-            },
-            uploadVideo(video) {
-                const videoInfo = {id : ++this.cnt, video: video, name: video.name};
-                // 将上传文件的信息添加到上传队列
-                this.videoInUploading.push(videoInfo);
-                // 为了方便进度条实时更新，使用percentages对象来记录上传的进度
-                this.$set(this.percentages, videoInfo.id, 0);
-
-                let formData = new FormData();
-                formData.append("parentId", this.currentDirectory.id);
-                formData.append("video", videoInfo.video);
-
-                const config = {
-                    onUploadProgress: progressEvent => {
-                        const progress = (progressEvent.loaded / progressEvent.total * 100 | 0)
-                        this.$set(this.percentages, videoInfo.id, progress);
-                    }
-                };
-                // 上传视频
-                this.axios.post(this.api.uploadVideoUrl, formData, config).then(r =>{
-                    if (r.data.status === 0)
-                        this.$message.warning(r.data.msg);
-
-                    // 延迟一秒钟执行，给用户和前端动画一点反应时间
-                    setTimeout(() => {
-                        // 上传结束，将视频从队列中删除
-                        this.$delete(this.percentages, videoInfo.id);
-                        this.videoInUploading = this.videoInUploading.filter(v =>{
-                            return v.id !== videoInfo.id;
-                        });
-                        this.$message.info(videoInfo.name + "上传成功");
-                        this.refreshFiles();
-                    }, 1000)
-                    console.log(this.percentages);
-                }).catch(err => {
-                    this.$message.error(err.message);
-                })
+                document.getElementById('upload-button').value = '';
             },
             addDirectory(){
                 this.$refs['directory-name-form'].validate(valid => {
@@ -197,9 +146,10 @@
                         this.$message.info("请输入符合要求的文件名");
                         return;
                     }
+                    const name = this.renameIfSame(this.newDirectory.name, this.directories);
                     this.showDirectoryNameDialog = false;
                     this.axios.post(this.api.addDirectoryUrl, {
-                        name: this.newDirectory.name,
+                        name: name,
                         parentId: this.currentDirectory.id
                     }).then(r => {
                         if (r.data.status === 1){
@@ -226,14 +176,14 @@
                     // 若跳转目录不在路径里面
                     this.currentPath.push(directory);
                 }else{
-                    // 跳转路径在目录里面
+                    // 跳转目录在路径里面
                     this.currentPath = this.currentPath.slice(0, pos + 1);
                 }
-                this.getCurrentFilesAndDirectories();
+                this.refreshFiles();
             },
             jumpBack(){
                 this.currentPath = this.currentPath.slice(0, this.currentPath.length - 1);
-                this.getCurrentFilesAndDirectories();
+                this.refreshFiles();
             },
             renameIfSame(name, ObjList){
                 //ObjList: 文件或文件夹的数组
@@ -241,7 +191,7 @@
                 // eslint-disable-next-line no-constant-condition
                 while (true){
                     let isSame = false;
-                    for (let i = 0; i < ObjList; i++){
+                    for (let i = 0; i < ObjList.length; i++){
                         if (newName === ObjList[i].name){
                             isSame = true;
                             break;
@@ -276,12 +226,10 @@
         float: left;
     }
 
-    .upload-window{
-        width: 400px;
-        height: 150px;
-        overflow: scroll;
-        position: fixed;
-        right: 20px;
-        bottom: 10px;
+    .empty-info{
+        margin-left: calc(50% - 100px);
+        margin-top: 15%;
+        font-size: 30px;
+        color: rgb(200, 200, 200);
     }
 </style>
