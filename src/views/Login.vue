@@ -11,7 +11,7 @@
                  v-show="showLoginOrRegisterCard"
                  :body-style="{ padding: '15px'}"
                  shadow="always">
-            <h1>登陆</h1>
+            <h1>登录</h1>
             <el-form label-width="60px" label-position="left" :rules="rules" ref="loginForm" :model="user">
                 <el-form-item label="邮箱" :inline="true" prop="email">
                     <el-input v-model="user.email" placeholder="请输入邮箱"></el-input>
@@ -96,7 +96,7 @@
             return{
                 user: {email: '', password: ''},
                 registerData: {email: '', password: '', phone: '', name: ''},
-                showLoginOrRegisterCard: false,
+                showLoginOrRegisterCard: true,
                 rules:{
                     email:[
                         {required: true, message: '邮箱不能为空', trigger: 'blur'},

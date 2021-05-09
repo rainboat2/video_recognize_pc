@@ -13,9 +13,9 @@ import echarts from 'echarts'
 import {api} from '@/js/api'
 import {tools} from '@/js/tools'
 
-
 // 引入全局css
 import "./assets/css/common.css"
+import "github-markdown-css/github-markdown.css"
 
 Vue.use(ElementUI)
 Vue.use(VueAxios, axios)

@@ -31,7 +31,7 @@
             </el-col>
             <el-col :span="6" :offset="13">
                 <div class="progress-area">
-                    <span>存储空间使用量：{{ownFileSize}}/21GB</span>
+                    <span>存储空间使用量：{{ownFileSize}}/{{fileCapacity}}</span>
                     <el-progress :percentage="Number.parseFloat(((user.ownFileSize / user.fileCapacity) * 100).toFixed(2))">
                     </el-progress>
                 </div>
@@ -89,31 +89,25 @@
             }
         },
         computed:{
-          currentDirectory: function () {
-              // 依据路径，计算出当前文件夹
-              const len = this.currentPath.length;
-              return this.currentPath[len - 1];
-          },
-          ownFileSize: function () {
-              // fileSize的单位为B
-              let fileSize = this.user.ownFileSize;
-              const oneKB = 1024;
-              const oneMB = 1024 * oneKB;
-              const oneGB = 1024 * oneMB;
-              if (fileSize < oneKB)
-                  return fileSize + "B";
-              else if (fileSize < oneMB)
-                  return (fileSize / oneKB).toFixed(1) + "KB";
-              else if (fileSize < oneGB)
-                  return (fileSize / oneMB).toFixed(1) + "MB";
-              else
-                  return (fileSize / oneGB).toFixed(1) + "GB";
-          }
+            currentDirectory: function () {
+                // 依据路径，计算出当前文件夹
+                const len = this.currentPath.length;
+                return this.currentPath[len - 1];
+            },
+            ownFileSize: function () {
+                // fileSize的单位为B
+                let fileSize = this.user.ownFileSize;
+                return this.tools.format(fileSize);
+            },
+            fileCapacity: function () {
+                return this.tools.format(this.user.fileCapacity);
+            }
         },
         created() {
             this.refreshFiles();
         },
         methods:{
+
             refreshFiles(){
                 // 刷新当前文件夹下的所有文件和文件夹
                 this.axios.get(this.api.getFilesAndDirectoriesUrl, {
@@ -132,12 +126,7 @@
                 let videoFile = event.target.files[0];
                 // 如果名称已经存在，则重命名文件
                 videoFile = new File([videoFile], this.renameIfSame(videoFile.name, this.files), {type: videoFile.type});
-                // 检查上传的视频是否小于100MB
-                if ((videoFile.size / 1048576) < 100){
-                    this.$parent.uploadVideo(videoFile, this.currentDirectory.id, () => {this.refreshFiles()});
-                }else{
-                    this.$message.info("上传的文件必须要小于100MB");
-                }
+                this.$parent.uploadVideo(videoFile, this.currentDirectory.id, () => {this.refreshFiles()});
                 document.getElementById('upload-button').value = '';
             },
             addDirectory(){

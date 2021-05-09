@@ -1,6 +1,6 @@
 <template>
     <div class="Development">
-        <p class="title">开发接口</p>
+        <p class="title">说明</p>
         <p>本系统提供基于HTTP协议的API，任何应用程序都可以接入本系统的API，使用本系统提供的行为识别服务。</p>
         <br>
         <p class="title">令牌管理</p>
@@ -84,14 +84,20 @@
             </el-table-column>
         </el-table>
         <br>
-        <p class="title">说明</p>
-        <br><br><br><br>
+        <div class="markdown-body">
+            <vue-markdown :source="specification"></vue-markdown>
+        </div>
     </div>
 </template>
 
 <script>
+    import VueMarkdown from "vue-markdown";
+
     export default {
         name: "Development",
+        components:{
+          VueMarkdown
+        },
         data(){
             return{
                 user: {secretKey: ''},
@@ -114,7 +120,8 @@
                         {required: true, message: '备注不能为空', trigger: 'blur'}
                     ]
                 },
-                showConfirmDialog: false
+                showConfirmDialog: false,
+                specification: '',
             }
         },
         created(){
@@ -126,6 +133,9 @@
                 }
             })
             this.getAllToken();
+            this.axios.get(this.api.specificationUrl).then(r => {
+                this.specification = r.data;
+            });
         },
         methods:{
             copyToken(row){
@@ -195,6 +205,10 @@
 
     .Development{
         text-align: left;
+        padding-bottom: 50px;
     }
 
+    .markdown-body{
+        width: 95%;
+    }
 </style>

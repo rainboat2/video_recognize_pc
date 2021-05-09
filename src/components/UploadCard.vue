@@ -5,6 +5,7 @@
                 <el-table-column
                         prop="name"
                         width="100px"
+                        :show-overflow-tooltip="true"
                         label="文件名">
                 </el-table-column>
                 <el-table-column
@@ -33,6 +34,11 @@
         },
         methods:{
             uploadVideo(videoFile, parentDirectoryId, callback) {
+                // 检查上传的视频是否小于500MB
+                if ((videoFile.size / 1048576) > 500){
+                    this.$message.info("上传的文件必须要小于500MB");
+                    return;
+                }
                 // 上传视频之前，要先从视频中提取封面
                 const video = document.getElementById('video');
                 video.src = window.URL.createObjectURL(videoFile);
@@ -55,7 +61,7 @@
                 let formData = new FormData();
                 formData.append("parentId", parentDirectoryId);
                 formData.append("video", videoUploadInfo.video);
-                formData.append("poster", this.tools.dataURLtoFile(imageUrl, "poster"));
+                formData.append("poster", this.tools.dataURLtoFile(imageUrl, "poster.png"));
 
                 const config = {
                     onUploadProgress: progressEvent => {
@@ -76,10 +82,11 @@
                             return v.id !== videoUploadInfo.id;
                         });
                         this.$message.info(videoUploadInfo.name + "上传成功");
+
+                        // 调用回调函数
                         if (callback !== undefined)
-                            callback();
+                            callback(r.data.file);
                     }, 1000)
-                    console.log(this.percentages);
                 }).catch(err => {
                     this.$message.error(err.message);
                 })

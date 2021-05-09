@@ -1,7 +1,7 @@
 <template>
     <div class="Frame">
         <div class="head">
-            <span class="logo">行为分类系统</span>
+            <span class="logo" @click="goToHomePage">行为分类系统</span>
             <span class="collapse-button">
                 <i :class="collapseButtonClass" @click="handleCollapse"></i>
             </span>
@@ -18,7 +18,7 @@
                 <template v-else>
                     <el-avatar :src="avatarPath" :size="40"></el-avatar>
                     <el-dropdown-menu>
-                        <el-dropdown-item command="login">前往登录</el-dropdown-item>
+                        <el-dropdown-item command="to-login">前往登录</el-dropdown-item>
                     </el-dropdown-menu>
                 </template>
             </el-dropdown>
@@ -102,7 +102,6 @@
                             } else
                                 this.$message.error("退出登陆失败");
                         }).catch(error =>{
-                            console.log(error);
                             this.$message.error(error.message);
                         });
                         break;
@@ -110,8 +109,8 @@
                         this.$router.push("/personal/information");
                         break;
                     case 'login':
-                        this.axios.get(this.api.loginUrl, {"params":
-                                {email: '1049696130@qq.com', password: '123456asd'}
+                        this.axios.get(this.api.loginUrl, {
+                            "params": {email: '1049696130@qq.com', password: '123456asd'}
                         }).then(r => {
                             const state = r.data.status;
                             if (state === 1){
@@ -124,9 +123,11 @@
                                 this.$message.warning("未知的状态码");
                             }
                         }).catch(error => {
-                            console.log(error);
                             this.$message.error(error.message);
                         })
+                        break;
+                    case 'to-login':
+                        this.$router.push("/login");
                         break;
                     default:
                         this.$message.error("unreachable command");
@@ -141,6 +142,9 @@
             uploadVideo(videoFile, parentDirectoryId, callback){
                 // 调用upload-card子组件，完成对视频文件的上传
                 this.$refs['upload-card'].uploadVideo(videoFile, parentDirectoryId, callback);
+            },
+            goToHomePage(){
+                this.$router.push("/homepage");
             }
         }
     }

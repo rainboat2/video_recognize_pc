@@ -1,8 +1,8 @@
 <template>
     <div class="Homepage">
-        <div class="title">首頁</div>
+        <div class="title">首页</div>
         <div style="width: 65%;float:left;">
-            <el-card :body-style="{padding: 0}">
+            <div class="card">
                 <div class="card-head">
                     <span>调用次数信息展示</span>
                 </div>
@@ -10,55 +10,64 @@
                     <el-row>
                         <el-col :span="6">
                             <p class="auto-hide-text">在线调用次数</p>
-                            <p><span class="lager-text">53</span>次</p>
+                            <p><span class="lager-text">{{invokeTimeInfo.online}}</span>次</p>
                         </el-col>
                         <el-col :span="6" :offset="2">
                             <p class="auto-hide-text">通过接口调用次数</p>
-                            <p><span class="lager-text">103</span>次</p>
+                            <p><span class="lager-text">{{invokeTimeInfo.api}}</span>次</p>
                         </el-col>
                         <el-col :span="6" :offset="2">
                             <p class="auto-hide-text">本月剩余调用次数</p>
-                            <p><span class="lager-text">844</span>次</p>
+                            <p><span class="lager-text">{{invokeTimeInfo.remain}}</span>次</p>
                         </el-col>
                     </el-row>
                 </div>
-                <div class="card-footer">
-                    <span class="text-button">数据说明</span>
-                    <el-divider direction="vertical"></el-divider>
-                    <span class="text-button">如何回复调用次数？</span>
-                </div>
-            </el-card>
+<!--                <div class="card-footer">-->
+<!--                    <span class="text-button">数据说明</span>-->
+<!--                    <el-divider direction="vertical"></el-divider>-->
+<!--                    <span class="text-button">如何回复调用次数？</span>-->
+<!--                </div>-->
+            </div>
             <br>
-            <el-card :body-style="{padding: 0}">
+            <div class="card">
                 <div class="card-head">
                     <span>调用时间展示</span>
                 </div>
                 <div class="card-body">
                     <div id="invoke_chart" class="center invoke-chart"></div>
                 </div>
-            </el-card>
+                <div class="card-footer">
+                    <span class="text-button" @click="goToPage('/online/recognize')"> >在线识别页面 </span>
+                </div>
+            </div>
             <br>
             <br>
             <br>
         </div>
         <div style="margin-left: 20px;width: 30%;float: left">
-            <el-card :body-style="{padding: 0}">
+            <div class="card">
                 <div class="card-head">
                     <span>存储空间使用情况</span>
                 </div>
                 <div class="card-body">
                     <div id="show-storage" class="center storage-pie-chart"></div>
                 </div>
-            </el-card>
+                <div class="card-footer">
+                    <span class="text-button" @click="goToPage('video/management')"> >视频管理页面</span>
+                </div>
+            </div>
             <br>
-            <el-card :body-style="{padding: 0}">
+            <div class="card">
                 <div class="card-head">
-                    <span>过去24小时调用情况</span>
+                    <span>今天调用情况</span>
                 </div>
                 <div class="card-body">
                     <div id="invoke-day-chart" class="center invoke-day-chart"></div>
                 </div>
-            </el-card>
+            </div>
+            <br>
+            <br>
+            <br>
         </div>
     </div>
 </template>
@@ -66,13 +75,53 @@
 <script>
     export default {
         name: "Homepage",
+        data(){
+          return{
+              user: {fileCapacity: 1000, ownFileSize: 500, totalInvokeTime: 100000},
+              invokeRecords: [
+                  {id: 1, isApiInvoke: true, accessToken: '', invokeTime: new Date('2021-04-23T10:09:49.000+00:00'), invokerId: 1}
+                  ],
+              invokeTimeInfo: {online: 53, api: 103, remain: 844},
+              storageChart: {used: 500, remain: 1000},
+          }
+        },
         mounted(){
-          this.init_storage_chart();
-          this.init_invoke_chart();
-          this.init_invoke_day_chart();
+            this.axios.get(this.api.getRecordsAndUserUrl).then(r => {
+                this.user = r.data.user;
+                this.invokeRecords = r.data.records;
+                for (let inv of this.invokeRecords){
+                    inv.invokeTime = new Date(inv.invokeTime);
+                }
+                // 按调用时间升序排序
+                this.invokeRecords.sort((r1, r2) => r1.invokeTime.getTime() - r2.invokeTime.getTime());
+                this.init_invoke_info_card();
+                this.init_storage_chart();
+                this.init_invoke_chart();
+                this.init_invoke_day_chart();
+            })
         },
         methods: {
+            goToPage(path){
+                this.$router.push(path)
+            },
+            init_invoke_info_card(){
+                let online = 0, api = 0;
+                for (let i = 0; i < this.invokeRecords.length; i++){
+                    if (this.invokeRecords[i].isApiInvoke)
+                        api++;
+                    else
+                        online++;
+                }
+                this.invokeTimeInfo.api = api;
+                this.invokeTimeInfo.online = online;
+                this.invokeTimeInfo.remain = this.user.totalInvokeTime - api - online;
+            },
             init_storage_chart(){
+                this.storageChart.used = this.user.ownFileSize;
+                this.storageChart.remain = this.user.fileCapacity - this.user.ownFileSize;
+
+                const used = this.storageChart.used;
+                const remain = this.storageChart.remain;
                 let option = {
                     tooltip: {
                         trigger: 'item',
@@ -81,7 +130,7 @@
                     legend: {
                         orient: 'vertical',
                         left: 10,
-                        data: ['已使用存储', '未使用存储']
+                        data: ['已使用：' + this.tools.format(used), '未使用：' + this.tools.format(remain)]
                     },
                     color: ["#5098eb", "#55f6d1"],
                     series: [
@@ -105,8 +154,8 @@
                                 show: false
                             },
                             data: [
-                                {value: 335, name: '已使用存储'},
-                                {value: 335, name: '未使用存储'},
+                                {value: Math.round(used/1048576), name: '已使用：' + this.tools.format(used)},
+                                {value: Math.round(remain/1048576), name: '未使用：' + this.tools.format(remain)},
                             ]
                         }
                     ]
@@ -115,20 +164,30 @@
                 storageChart.setOption(option);
             },
             init_invoke_chart(){
-                let base = +new Date(2000, 1, 1);
-                const oneDay = 24 * 3600 * 1000;
                 const date = [];
-                const data1 = [Math.random()*300];
-                const data2 = [Math.random()*300];
-
-                for (let i = 1; i < 20000; i++) {
-                    let now = new Date(base += oneDay);
-                    date.push([now.getFullYear(), now.getMonth() + 1, now.getDate()].join('/'));
-                    let r = Math.round((Math.random() - 0.5) * 20 + data1[i - 1]);
-                    data1.push((r > 0)? r : -r);
-
-                    r = Math.round((Math.random() - 0.5) * 20 + data2[i - 1]);
-                    data2.push((r > 0)? r : -r);
+                const api_data = [];
+                const online_data = [];
+                const N = this.invokeRecords.length;
+                if (N !== 0) {
+                    const oneDay = 24 * 3600 * 1000;
+                    const getBaseDay = (d) => {return new Date(d.getFullYear(), d.getMonth(), d.getDate())};
+                    let base = getBaseDay(this.invokeRecords[0].invokeTime);
+                    let i = 0;
+                    const now = new Date(Date.now());
+                    while (base.getTime() <= now.getTime()){
+                        let api = 0, online = 0;
+                        // 统计同一天有多少次在线调用和api调用
+                        while (i < N && this.tools.isSameDay(base, this.invokeRecords[i].invokeTime)){
+                            const record = this.invokeRecords[i];
+                            if (record.isApiInvoke)  api ++;
+                            else                     online++;
+                            i++;
+                        }
+                        date.push([base.getFullYear(), base.getMonth(), base.getDate()].join('/'));
+                        api_data.push(api);
+                        online_data.push(online);
+                        base = new Date(base.getTime() + oneDay);
+                    }
                 }
 
                 const option = {
@@ -160,11 +219,11 @@
                     },
                     dataZoom: [{
                         type: 'inside',
-                        start: 0,
-                        end: 10
+                        start: 50,
+                        end: 100
                     }, {
-                        start: 0,
-                        end: 10
+                        start: 50,
+                        end: 100
                     }],
                     legend: {
                         data: ['在线调用', '通过api调用']
@@ -178,7 +237,7 @@
                             itemStyle: {
                                 color: 'rgb(91,162,238)'
                             },
-                            data: data1
+                            data: online_data
                         },
                         {
                             name: '通过api调用',
@@ -188,7 +247,7 @@
                             itemStyle: {
                                 color: 'rgb(63,205,103)'
                             },
-                            data: data2
+                            data: api_data
                         }
                     ]
                 };
@@ -196,19 +255,42 @@
                 invokeChart.setOption(option);
             },
             init_invoke_day_chart(){
+                const now = new Date(Date.now());
+                const records = this.invokeRecords.filter(r => {
+                    return this.tools.isSameDay(r.invokeTime, now);
+                });
+                const time = new Array(12);
+                const data = new Array(12);
+                for (let i = 0; i < 12; i++){
+                    time[i] = (i + 1) * 2 + '点';
+                    data[i] = 0;
+                }
+                for (let r of records){
+                    data[Math.ceil(r.invokeTime.getHours() / 2)]++;
+                }
                 let option = {
                     xAxis: {
                         type: 'category',
                         boundaryGap: false,
-                        data: ['4点', '8点', '12点', '16点', '20点',  '24点']
+                        data: time,
                     },
                     yAxis: {
                         name: '调用次数'
                     },
                     series: [{
-                        symbol: 'none',
-                        data: [0, 2, 5, 1, 4, 1],
+                        data: data,
                         type: 'line',
+                        smooth: true,
+                        areaStyle: {
+                            opacity: 0.5,
+                            color: new this.echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                                offset: 0,
+                                color: 'rgba(0, 221, 255)'
+                            }, {
+                                offset: 1,
+                                color: 'rgba(77, 119, 255)'
+                            }])
+                        },
                         itemStyle: {
                             color: '#5098eb'
                         },
@@ -225,6 +307,12 @@
 
     .Homepage{
         min-width: 960px;
+        padding-bottom: 50px;
+    }
+
+    .card{
+        box-shadow: 0 4px 10px rgb(230, 230, 230);
+        border-radius: 5px;
     }
 
     .card-head{
@@ -238,7 +326,7 @@
     }
 
     .card-body{
-        min-height: 100px;
+        min-height: 120px;
         color: rgb(50, 50, 50);
     }
 

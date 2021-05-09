@@ -51,19 +51,22 @@
             </span>
         </el-dialog>
 
-        <el-dialog title="选择文件夹"
+        <el-dialog title="选择要移动到的文件夹"
                    :append-to-body="true"
                    width="30%"
                    :visible.sync="selectDirectoryDialogVisible">
             <el-tree
                     lazy
-                    show-checkbox
-                    :props="directories">
-
+                    highlight-current
+                    @node-click="selectNode"
+                    :load="loadDirectory"
+                    :props="treeDirectoryProps">
             </el-tree>
              <span slot="footer" class="dialog-footer">
                 <el-button @click="selectDirectoryDialogVisible = false">取 消</el-button>
-                <el-button type="primary" @click="selectDirectoryDialogVisible = false;">确 定</el-button>
+                <el-button type="primary" @click="selectDirectoryDialogVisible = false;moveFileToSelectedDirectory()">
+                    确 定
+                </el-button>
             </span>
         </el-dialog>
 
@@ -94,13 +97,18 @@
                 deleteDialogVisible: false,
                 selectDirectoryDialogVisible: false,
                 newFile: {name: '', suffix: ''},
-                directories: {label: '测试文件'},
                 rules:{
                     name: [
                         {required: true, message: '文件夹名不能为空', trigger: 'blur'},
                         {min: 2, max: 16, message: '昵称长度应在2～16个字符之间', trigger: 'blur'}
                     ],
-                }
+                },
+                treeDirectoryProps: {
+                    label: 'name',
+                    children: 'childrenDirectories',
+                    isLeaf: 'leaf'
+                },
+                selectedDirectoryId: '',
             }
         },
         computed: {
@@ -110,8 +118,6 @@
                 else
                     return this.api.resPath + '/' + this.file.coverImagePath;
             }
-        },
-        created(){
         },
         methods:{
             refreshFiles(){
@@ -134,6 +140,8 @@
                         this.deleteDialogVisible = true;
                         break;
                     case "move":
+                        this.selectedDirectoryId = '';
+                        this.selectDirectoryDialogVisible = true;
                         break;
                     default:
                         this.$message.error("未知的文件操作指令");
@@ -194,6 +202,48 @@
                     this.$message.error(err.message);
                 })
             },
+            loadDirectory(node, resolve){
+                if (node.level === 0){
+                    return resolve([{name: '全部文件', id: -1}]);
+                }
+                this.axios.get(this.api.getDirectoriesUrl, {
+                    params:{
+                        parentId : node.data.id
+                    }
+                }).then(res => {
+                    const directories = res.data.directories;
+                    resolve(directories);
+                })
+            },
+            selectNode(data, node){
+                this.selectedDirectoryId = node.data.id;
+            },
+            moveFileToSelectedDirectory(){
+                if (this.selectedDirectoryId === undefined || this.selectedDirectoryId === ''){
+                    this.$message.warning("未选中文件夹");
+                    return;
+                }
+                // 无需进行移动
+                if (this.file.parentId === this.selectedDirectoryId) {
+                    this.$message.info("移动成功");
+                    return;
+                }
+
+                this.axios.get(this.api.moveFileUrl, {
+                    params:{
+                        fileId: this.file.id,
+                        isDirectory: this.isDirectory,
+                        newParentId: this.selectedDirectoryId,
+                    }
+                }).then(res => {
+                    if (res.data.status === 1){
+                        this.refreshFiles();
+                        this.$message.info("移动成功!");
+                    }else{
+                        this.$message.error(res.data.msg);
+                    }
+                })
+            }
         }
     }
 </script>
