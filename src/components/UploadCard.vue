@@ -45,9 +45,12 @@
                 const canvas = document.createElement("canvas");
                 canvas.width = video.clientWidth;
                 canvas.height = video.clientHeight;
+                console.log(video);
+                console.log(videoFile);
                 video.onloadeddata = () => {
                     canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
                     const imageUrl = canvas.toDataURL("image/png");
+                    console.log(imageUrl);
                     this.upload(videoFile, parentDirectoryId, imageUrl, callback);
                 }
             },

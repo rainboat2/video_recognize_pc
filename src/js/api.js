@@ -28,6 +28,7 @@ export const api = {
     renameFileUrl: host + "/file/rename",
     deleteFileUrl: host + "/file/delete",
     getFileByIdUrl: host + "/file/getById",
+    getAllFilesByIdListUrl: host + '/file/getAllFilesById',
 
     // 文件夹相关的请求链接
     getFilesAndDirectoriesUrl: host + "/directory/getFilesAndDirectories",
@@ -39,5 +40,6 @@ export const api = {
 
     // 接口调用相关的请求
     onlineInvokeRecognizeUrl: host + "/invoke/recognize",
+    recognizeAllUrl: host + "/invoke/recognizeAll",
     getRecordsAndUserUrl: host + "/invoke/recordsAndUser",
 }

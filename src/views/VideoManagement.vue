@@ -29,7 +29,10 @@
                     </span>
                 </el-dialog>
             </el-col>
-            <el-col :span="6" :offset="13">
+            <el-col :span="2">
+                <el-button size="small" @click="recognizeSelectedVideo" plain>识别选中视频</el-button>
+            </el-col>
+            <el-col :span="6" :offset="11">
                 <div class="progress-area">
                     <span>存储空间使用量：{{ownFileSize}}/{{fileCapacity}}</span>
                     <el-progress :percentage="Number.parseFloat(((user.ownFileSize / user.fileCapacity) * 100).toFixed(2))">
@@ -38,6 +41,8 @@
             </el-col>
         </el-row>
         <div class="path-bar">
+            <el-checkbox :value="isSelectedAll" @change="selectAll">{{selectedInfo}}</el-checkbox>
+            <el-divider direction="vertical"></el-divider>
             <template v-if="currentPath.length > 1">
                 <el-button type="text" @click="jumpBack">返回上一级</el-button>
                 <el-divider direction="vertical"></el-divider>
@@ -53,13 +58,15 @@
                    :file="file"
                    @refreshFile="refreshFiles"
                    :key="'f' + file.id"
+                   :ref="'f' + file.id"
                    :is-directory="false">
         </file-card>
         <file-card class="file-card"
                    v-for="directory in directories"
                    :file="directory"
-                   :key="directory.id"
-                   @click.native="open(directory)"
+                   :key="'d' + directory.id"
+                   :ref="'d' + directory.id"
+                   @dblclick.native="open(directory)"
                    :is-directory="true">
         </file-card>
 
@@ -85,7 +92,12 @@
                         {required: true, message: '文件夹名不能为空', trigger: 'blur'},
                         {min: 2, max: 16, message: '名称长度应在2～16个字符之间', trigger: 'blur'}
                     ],
-                }
+                },
+                selected: {
+                    files: new Set(),
+                    directories: new Set(),
+                    count: 0,
+                },
             }
         },
         computed:{
@@ -101,13 +113,23 @@
             },
             fileCapacity: function () {
                 return this.tools.format(this.user.fileCapacity);
+            },
+            selectedInfo: function () {
+                if (this.selected.count === 0)
+                    return "选择文件";
+                else
+                    return `已选中${this.selected.count}个文件/文件夹`;
+            },
+            isSelectedAll: function () {
+                if (this.selected.count === 0)
+                    return false;
+                return this.selected.count === (this.directories.length + this.files.length);
             }
         },
         created() {
             this.refreshFiles();
         },
         methods:{
-
             refreshFiles(){
                 // 刷新当前文件夹下的所有文件和文件夹
                 this.axios.get(this.api.getFilesAndDirectoriesUrl, {
@@ -120,6 +142,7 @@
                     }else{
                         this.$message.warning(r.data.msg);
                     }
+                    this.clearSelectStatus();
                 })
             },
             handleUploadChange(event){
@@ -191,6 +214,54 @@
                     cnt++;
                 }
                 return newName;
+            },
+            select(file, isDirectory){
+                if (isDirectory){
+                    this.selected.directories.add(file);
+                }else{
+                    this.selected.files.add(file);
+                }
+                this.$set(this.selected, 'count', this.selected.directories.size + this.selected.files.size);
+            },
+            cancelSelect(file, isDirectory){
+                if (isDirectory){
+                    this.selected.directories.delete(file);
+                }else{
+                    this.selected.files.delete(file);
+                }
+                this.$set(this.selected, 'count', this.selected.directories.size + this.selected.files.size);
+            },
+            selectAll(isSelected){
+                for (let f of this.files){
+                    this.$refs['f' + f.id][0].setChecked(isSelected);
+                }
+                for (let d of this.directories)
+                    this.$refs['d' + d.id][0].setChecked(isSelected);
+
+                this.$set(this.selected, 'count', this.selected.directories.size + this.selected.files.size);
+            },
+            clearSelectStatus(){
+                this.selected = {
+                    files: new Set(),
+                    directories: new Set(),
+                    count: 0,
+                };
+            },
+            recognizeSelectedVideo(){
+                if (this.selected.files.size === 0) {
+                    this.$message.info("未选中任何视频");
+                }else{
+                    const videoList = [];
+                    for (let v of this.selected.files)
+                        videoList.push(v)
+
+                    this.$router.push({
+                        name: 'OnlineRecognize',
+                        params: {
+                            videoList: JSON.stringify(videoList)
+                        }
+                    })
+                }
             }
         }
     }

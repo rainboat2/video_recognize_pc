@@ -4,7 +4,7 @@
         <div style="width: 65%;float:left;">
             <div class="card">
                 <div class="card-head">
-                    <span>调用次数信息展示</span>
+                    <span>本月调用次数信息展示</span>
                 </div>
                 <div class="card-body">
                     <el-row>
@@ -31,7 +31,7 @@
             <br>
             <div class="card">
                 <div class="card-head">
-                    <span>调用时间展示</span>
+                    <span>总体调用记录展示</span>
                 </div>
                 <div class="card-body">
                     <div id="invoke_chart" class="center invoke-chart"></div>
@@ -106,8 +106,12 @@
             },
             init_invoke_info_card(){
                 let online = 0, api = 0;
-                for (let i = 0; i < this.invokeRecords.length; i++){
-                    if (this.invokeRecords[i].isApiInvoke)
+                const now = new Date(Date.now());
+                const records = this.invokeRecords.filter(record => {
+                    return record.invokeTime.getMonth() === now.getMonth();
+                })
+                for (let i = 0; i < records.length; i++){
+                    if (records[i].isApiInvoke)
                         api++;
                     else
                         online++;

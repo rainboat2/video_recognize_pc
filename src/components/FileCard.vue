@@ -11,10 +11,11 @@
                 <el-dropdown-item command="move">移动到</el-dropdown-item>
             </el-dropdown-menu>
         </el-dropdown>
+        <el-checkbox style="float: left" @change="handleCheckboxChange" v-model="checked"></el-checkbox>
         <el-image
                 style="width: 100px;height: 100px"
                 fit="contain"
-                @click="previewVideo"
+                @dblclick="previewVideo"
                 :src="cardImage">
         </el-image>
         <br>
@@ -109,6 +110,7 @@
                     isLeaf: 'leaf'
                 },
                 selectedDirectoryId: '',
+                checked: false
             }
         },
         computed: {
@@ -132,6 +134,9 @@
                             rs = ['', this.file.name, ''];
                         else
                             rs = this.file.name.match(/(.*)(\.[a-zA-z1-9]+)$/);
+                        console.log(rs);
+                        console.log(this.isDirectory);
+                        console.log(this.file.name)
                         this.newFile.name = rs[1];
                         this.newFile.suffix = rs[2];
                         this.showRenameDialog = true;
@@ -158,7 +163,7 @@
                 this.$router.push({
                     name: 'OnlineRecognize',
                     params: {
-                        video: this.file
+                        videoList: JSON.stringify([this.file])
                     }
                 })
             },
@@ -243,6 +248,18 @@
                         this.$message.error(res.data.msg);
                     }
                 })
+            },
+            handleCheckboxChange(isSelected){
+                if (isSelected){
+                    this.$parent.select(this.file, this.isDirectory);
+                }else{
+                    this.$parent.cancelSelect(this.file, this.isDirectory);
+                }
+            },
+            setChecked(isChecked){
+                // 直接设定绑定的指貌似不会触发onchange回调函数，所以需要手动调用handleCheckboxChange方法
+                this.checked = isChecked;
+                this.handleCheckboxChange(isChecked);
             }
         }
     }
