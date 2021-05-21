@@ -1,4 +1,2 @@
-const a = null;
-
-if (a in [null, '', undefined])
-    console.log(a);
+const t = {}
+console.log(Object.keys(t).length)

@@ -76,7 +76,8 @@
                    :append-to-body="true"
                    width="50%"
                    :visible.sync="showPreviewVideoDialog">
-            <video v-if="showPreviewVideoDialog" :src="previewVideoUrl"  width="100%" controls preload></video>
+            <video v-if="showPreviewVideoDialog" :src="previewVideoUrl"  width="100%" style="max-height: 430px" controls preload>
+            </video>
             <span slot="footer" class="dialog-footer">
                 <el-button type="primary" @click="showPreviewVideoDialog = false;goToOnlineRecognizePage()">前往分析页面</el-button>
             </span>
@@ -134,9 +135,6 @@
                             rs = ['', this.file.name, ''];
                         else
                             rs = this.file.name.match(/(.*)(\.[a-zA-z1-9]+)$/);
-                        console.log(rs);
-                        console.log(this.isDirectory);
-                        console.log(this.file.name)
                         this.newFile.name = rs[1];
                         this.newFile.suffix = rs[2];
                         this.showRenameDialog = true;
@@ -149,7 +147,7 @@
                         this.selectDirectoryDialogVisible = true;
                         break;
                     default:
-                        this.$message.error("未知的文件操作指令");
+                        this.$message.error("未知的文件操作指令!");
                         break;
                 }
             },

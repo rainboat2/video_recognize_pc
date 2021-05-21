@@ -9,7 +9,8 @@
         <br>
         <el-row :gutter="20">
             <el-col :span="16">
-                <video id="display-video" :src="videoUrl" class="video-area" preload controls>
+                <video id="display-video" :src="videoUrl"
+                       class="video-area" preload controls>
                 </video>
             </el-col>
             <el-col :span="8">
@@ -39,11 +40,16 @@
                 </div>
                 <p class="recognize-title">识别结果</p>
                 <div v-if="curVideo.recognizeResult !== ''">
-                    <p>动作</p>
-                    <el-tag type="success">{{curVideo.recognizeResult.action}}</el-tag>
-                    <p>位置</p>
-                    <el-tag type="success">{{curVideo.recognizeResult.position}}</el-tag>
-                    <br><br>
+                    <template v-if="Object.keys(curVideo.recognizeResult).length !== 0">
+                        <el-tag effect="plain" v-for="(val, key) in curVideo.recognizeResult" :key="key">
+                            {{key}}
+                        </el-tag>
+                    </template>
+                    <template v-else>
+                        <el-tag effect="plain" type="warning">
+                            没有识别到任何结果
+                        </el-tag>
+                    </template>
                 </div>
                 <p v-else>暂无结果</p>
                 <el-button v-if="curVideo.id === undefined" type="primary" size="small" disabled>
@@ -52,7 +58,8 @@
                 <el-button v-else-if="curVideo.recognizeResult !== ''" type="primary" size="small" @click="recognize">
                     重新识别
                 </el-button>
-                <el-button v-else-if="minutesSinceLastRecognize < 10" type="primary" size="small" @click="refreshCurrentVideo">
+                <el-button v-else-if="minutesSinceLastRecognize < 10" type="primary"
+                           size="small" @click="refreshCurrentVideo" id="refresh-button">
                     识别中，点击刷新
                 </el-button>
                 <el-button v-else type="primary" size="small" @click="recognize">
@@ -63,6 +70,23 @@
         </el-row>
         <br>
         <br>
+        <el-dialog title="批量识别结果"
+                   center
+                   :append-to-body="true"
+                   width="30%"
+                   :visible.sync="showRecognizeAllDialog">
+            <p>开始识别的视频:</p>
+            <el-tag v-for="name in recognizeAllResult.succeed" :key="name" type="success" effect="dark">
+                {{name}}
+            </el-tag>
+            <p>未能开始识别的视频</p>
+            <el-tag v-for="name in recognizeAllResult.failed" :key="name" type="danger" effect="dark">
+                {{name}}
+            </el-tag>
+            <span slot="footer" class="dialog-footer">
+                <el-button type="primary" @click="showRecognizeAllDialog = false">确 定</el-button>
+            </span>
+        </el-dialog>
     </div>
 </template>
 
@@ -72,7 +96,13 @@
         data(){
             return{
                 curVideoIndex: -1,
-                videoList: []
+                videoList: [],
+                showRecognizeAllDialog: false,
+                recognizeAllResult: {
+                    failed: ['1.mp4'],
+                    succeed: ['2.mp4'],
+                    status: 1,
+                }
             }
         },
         created(){
@@ -98,7 +128,7 @@
                 if (this.curVideoIndex >= this.videoList.length || this.curVideoIndex < 0)
                     return {lastRecognizeTime: '2021-04-06T12:53:59.000+00:00', recognizeResult: '', name: '暂无视频'};
                 return this.videoList[this.curVideoIndex];
-            }
+            },
         },
         methods: {
             parseRecognizeResult(rec){
@@ -140,11 +170,14 @@
                 const ids = [];
                 for (let v of this.videoList)
                     ids.push(v.id);
+                console.log(ids);
                 this.axios.post(this.api.recognizeAllUrl, {
                     idList: ids
                 }).then(res => {
+                    console.log(res.data);
                     if (res.data.status === 1){
-                        console.log(res.data.fileIds);
+                        this.recognizeAllResult = res.data;
+                        this.showRecognizeAllDialog = true;
                         this.refreshAll();
                     }else{
                         this.$message.warning(res.data.msg);
@@ -166,18 +199,21 @@
                 const ids = [];
                 for (let v of this.videoList)
                     ids.push(v.id);
+                console.log(ids);
                 this.axios.post(this.api.getAllFilesByIdListUrl, {
                     idList: ids
                 }).then(res => {
                     const videos = res.data.files;
-                    for (let v of videos)
+                    for (let v of videos) {
                         v.recognizeResult = this.parseRecognizeResult(v.recognizeResult);
+                        console.log(v.recognizeResult);
+                    }
                     this.videoList = videos;
                 })
             },
             select(videoIndex){
                 this.curVideoIndex = videoIndex;
-            }
+            },
         }
     }
 </script>
@@ -191,6 +227,8 @@
 
     .video-area{
         width: 100%;
+        max-height: 560px;
+        border: 1px solid #E0E0E0;
     }
 
     .recognize-title{
@@ -251,5 +289,10 @@
     .selected{
         background-color: white;
         color: #3a8ee6;
+    }
+
+    .el-tag{
+        margin-right: 5px;
+        margin-bottom: 10px;
     }
 </style>
