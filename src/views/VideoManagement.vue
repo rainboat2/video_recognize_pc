@@ -6,7 +6,7 @@
                 <el-button type="primary" size="small" onclick="document.getElementById('upload-button').click()">
                     上传<i class="el-icon-upload el-icon--right"></i>
                 </el-button>
-                <input id="upload-button" type="file" style="display: none" @change="handleUploadChange" accept=".mp4"/>
+                <input id="upload-button" type="file" style="display: none" multiple @change="handleUploadChange" accept=".mp4"/>
             </el-col>
             <el-col :span="2">
                 <el-button size="small" @click="showDirectoryNameDialog = true;newDirectory.name=''" plain>
@@ -146,10 +146,20 @@
                 })
             },
             handleUploadChange(event){
-                let videoFile = event.target.files[0];
-                // 如果名称已经存在，则重命名文件
-                videoFile = new File([videoFile], this.renameIfSame(videoFile.name, this.files), {type: videoFile.type});
-                this.$parent.uploadVideo(videoFile, this.currentDirectory.id, () => {this.refreshFiles()});
+                let cnt = 0;
+                for (let videoFile of event.target.files){
+                    // 如果名称已经存在，则重命名文件
+                    videoFile = new File([videoFile], this.renameIfSame(videoFile.name, this.files), {type: videoFile.type});
+                    // 提取封面需要一点时间，因此必须隔开一秒调用一次
+                    setTimeout(
+                        () => {
+                            this.$parent.uploadVideo(videoFile, this.currentDirectory.id, () => {this.refreshFiles()})
+                        },
+                        1000 * cnt
+                    )
+                    cnt++;
+                }
+
                 document.getElementById('upload-button').value = '';
             },
             addDirectory(){

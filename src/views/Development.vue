@@ -4,23 +4,13 @@
         <p>本系统提供基于HTTP协议的API，任何应用程序都可以接入本系统的API，使用本系统提供的行为识别服务。</p>
         <br>
         <p class="title">令牌管理</p>
-        <el-row class="information-form">
-            <el-col :span="2"><span class="label">密钥:</span></el-col>
-            <el-col :span="4"><span>{{user.secretKey}}</span></el-col>
-            <el-col :span="2">
-                <span @click="showConfirmDialog = true" class="text-button">重置</span>
-            </el-col>
-            <el-col :span="6">
-                <span style="font-size: 12px;color: coral">重置密钥可以清空所有令牌</span>
-            </el-col>
-        </el-row>
         <el-dialog
                 title="警告"
                 center
                 :append-to-body="true"
                 :visible.sync="showConfirmDialog"
                 width="30%">
-            <span>重置密钥将会清空令牌</span>
+            <span>所有令牌将会失效，并从系统中删除!</span>
             <span slot="footer" class="dialog-footer">
                 <el-button @click="showConfirmDialog = false">取 消</el-button>
                 <el-button type="primary" @click="resetSecretKey">确 定</el-button>
@@ -28,6 +18,8 @@
         </el-dialog>
         <br>
         <el-button size="small" type="primary" @click="newToken={};showAddTokenDialog=true;">添加令牌</el-button>
+        <el-button size="small" style="float: right;margin-right: 60px" @click="showConfirmDialog = true">
+            无效化所有令牌</el-button>
         <el-dialog :visible.sync="showAddTokenDialog"
                    width="400px"
                    center
@@ -57,6 +49,7 @@
         <el-table
                 :data="tokens"
                 :default-sort = "{prop: 'createTime', order: 'descending'}"
+
                 border style="width: 95%;" size="medium" max-height="400px">
             <el-table-column
                     label="令牌">
@@ -100,7 +93,6 @@
         },
         data(){
             return{
-                user: {secretKey: ''},
                 tokens: [
                     {id: 1, content: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXNzd29yZCI6IjEyMzQ1NiIsImV4cCI6MTYxMTQ3MTQ0NCwidXNlcm5hbWUiOiJyYWluIn0.yCziur8mvYUL8_59JLw2JMaMGFrCtH9OCrf-l6CWBIo',
                         createTime: '2021-1-1', expireTime: '2022-1-1', note: '注解'}
@@ -125,13 +117,6 @@
             }
         },
         created(){
-            this.axios.get(this.api.currentUserUrl).then(r => {
-                if (r.data.status === 1){
-                    this.user = r.data.user;
-                }else{
-                    this.$message.error(r.data.msg);
-                }
-            })
             this.getAllToken();
             this.axios.get(this.api.specificationUrl).then(r => {
                 this.specification = r.data;
@@ -172,7 +157,6 @@
             resetSecretKey(){
                 this.axios.get(this.api.resetSecretKeyUrl).then(r => {
                     if (r.data.status === 1){
-                        this.user.secretKey = r.data.secretKey;
                         this.$message.info("成功重置当前密钥");
                         this.getAllToken();
                     }else{

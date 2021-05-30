@@ -2,9 +2,9 @@
     <div class="OnlineRecognize">
         <p class="title">在线识别</p>
         <el-button type="primary" size="small" onclick="document.getElementById('upload-button').click()">
-            上传<i class="el-icon-upload el-icon--right"></i>
+            上传视频<i class="el-icon-upload el-icon--right"></i>
         </el-button>
-        <input id="upload-button" type="file" style="display: none" @change="handleUploadChange" accept=".mp4"/>
+        <input id="upload-button" type="file" style="display: none"  @change="handleUploadChange" accept=".mp4"/>
         <br>
         <br>
         <el-row :gutter="20">
@@ -19,7 +19,13 @@
                         <el-col :span="6">
                             <span class="video-list-title">视频列表</span>
                         </el-col>
-                        <el-col :span="5" :offset="11">
+                        <el-col :span="5" :offset="6">
+                            <span class="text-button recognize-all-button"
+                                  @click="refreshAll();info('刷新成功！')">
+                                刷新全部
+                            </span>
+                        </el-col>
+                        <el-col :span="5">
                             <span class="text-button recognize-all-button" @click="recognizeAll">识别全部</span>
                         </el-col>
                         <el-col :span="2">
@@ -59,13 +65,13 @@
                     重新识别
                 </el-button>
                 <el-button v-else-if="minutesSinceLastRecognize < 10" type="primary"
-                           size="small" @click="refreshCurrentVideo" id="refresh-button">
+                           size="small" @click="refreshCurrentVideo();info('刷新成功！')" id="refresh-button">
                     识别中，点击刷新
                 </el-button>
                 <el-button v-else type="primary" size="small" @click="recognize">
                     开始识别
                 </el-button>
-                <p class="hints">识别过程大约持续1～3分钟</p>
+                <p class="hints">依据视频长度不同，识别时间也不同，请耐心等待！</p>
             </el-col>
         </el-row>
         <br>
@@ -170,11 +176,9 @@
                 const ids = [];
                 for (let v of this.videoList)
                     ids.push(v.id);
-                console.log(ids);
                 this.axios.post(this.api.recognizeAllUrl, {
                     idList: ids
                 }).then(res => {
-                    console.log(res.data);
                     if (res.data.status === 1){
                         this.recognizeAllResult = res.data;
                         this.showRecognizeAllDialog = true;
@@ -199,7 +203,6 @@
                 const ids = [];
                 for (let v of this.videoList)
                     ids.push(v.id);
-                console.log(ids);
                 this.axios.post(this.api.getAllFilesByIdListUrl, {
                     idList: ids
                 }).then(res => {
@@ -207,6 +210,8 @@
                     for (let v of videos) {
                         v.recognizeResult = this.parseRecognizeResult(v.recognizeResult);
                         console.log(v.recognizeResult);
+                        console.log(new Date(v.lastRecognizeTime))
+                        console.log(this.minutesSinceLastRecognize)
                     }
                     this.videoList = videos;
                 })
@@ -214,6 +219,9 @@
             select(videoIndex){
                 this.curVideoIndex = videoIndex;
             },
+            info(msg){
+                this.$message.info(msg);
+            }
         }
     }
 </script>
@@ -271,7 +279,7 @@
 
     .video-item{
         height: 28px;
-        width: 100%;
+        width: 95%;
         border-radius: 2px;
         background-color: rgb(242, 242, 242);
         margin-top: 5px;

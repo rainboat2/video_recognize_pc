@@ -45,12 +45,9 @@
                 const canvas = document.createElement("canvas");
                 canvas.width = video.clientWidth;
                 canvas.height = video.clientHeight;
-                console.log(video);
-                console.log(videoFile);
                 video.onloadeddata = () => {
                     canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
                     const imageUrl = canvas.toDataURL("image/png");
-                    console.log(imageUrl);
                     this.upload(videoFile, parentDirectoryId, imageUrl, callback);
                 }
             },
@@ -84,7 +81,7 @@
                         this.videoInUploading = this.videoInUploading.filter(v =>{
                             return v.id !== videoUploadInfo.id;
                         });
-                        this.$message.info(videoUploadInfo.name + "上传成功");
+                        this.$message.info(r.data.file.name + "上传成功");
 
                         // 调用回调函数
                         if (callback !== undefined)
@@ -101,7 +98,7 @@
 <style scoped>
     .upload-window{
         width: 400px;
-        height: 150px;
+        max-height: 350px;
         overflow: scroll;
         position: fixed;
         right: 20px;
