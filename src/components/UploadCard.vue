@@ -33,26 +33,34 @@
             }
         },
         methods:{
-            uploadVideo(videoFile, parentDirectoryId, callback) {
+            async uploadVideo(videoFileList, parentDirectoryId, callback) {
                 // 检查上传的视频是否小于500MB
-                if ((videoFile.size / 1048576) > 500){
-                    this.$message.info("上传的文件必须要小于500MB");
-                    return;
+                for (let videoFile of videoFileList){
+                    if ((videoFile.size / 1048576) > 500){
+                        this.$message.info("上传的文件必须要小于500MB");
+                        return;
+                    }
                 }
-                // 上传视频之前，要先从视频中提取封面
                 const video = document.getElementById('video');
-                video.src = window.URL.createObjectURL(videoFile);
                 const canvas = document.createElement("canvas");
                 canvas.width = video.clientWidth;
                 canvas.height = video.clientHeight;
-                video.onloadeddata = () => {
-                    canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
-                    const imageUrl = canvas.toDataURL("image/png");
+                // 上传视频之前，要先从视频中提取封面
+                for (let videoFile of videoFileList){
+                    let imageUrl;
+                    video.src = window.URL.createObjectURL(videoFile);
+                    await new Promise(resolve => {
+                        video.onloadeddata = () => {
+                            canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+                            imageUrl = canvas.toDataURL("image/png");
+                            resolve()
+                        }
+                    })
                     this.upload(videoFile, parentDirectoryId, imageUrl, callback);
                 }
             },
             upload(videoFile, parentDirectoryId, imageUrl, callback){
-                const videoUploadInfo = {id : ++this.cnt, video: videoFile, name: videoFile.name};
+                const videoUploadInfo = {id: ++this.cnt, video: videoFile, name: videoFile.name};
                 // 将上传文件的信息添加到上传队列
                 this.videoInUploading.push(videoUploadInfo);
                 // 为了方便进度条实时更新，使用percentages对象来记录上传的进度

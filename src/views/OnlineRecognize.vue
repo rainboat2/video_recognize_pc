@@ -4,7 +4,7 @@
         <el-button type="primary" size="small" onclick="document.getElementById('upload-button').click()">
             上传视频<i class="el-icon-upload el-icon--right"></i>
         </el-button>
-        <input id="upload-button" type="file" style="display: none"  @change="handleUploadChange" accept=".mp4"/>
+        <input id="upload-button" type="file" style="display: none"   @change="handleUploadChange" accept=".mp4"/>
         <br>
         <br>
         <el-row :gutter="20">
@@ -150,7 +150,7 @@
                 // 重命名文件
                 videoFile = new File([videoFile], videoFile.name, {type: videoFile.type});
                 // 使用父组件提供的上传方法
-                this.$parent.uploadVideo(videoFile, "-1", video => {
+                this.$parent.uploadVideo([videoFile], "-1", video => {
                     video.recognizeResult = this.parseRecognizeResult(video.recognizeResult);
                     this.videoList.push(video);
                 });
@@ -210,7 +210,6 @@
                     for (let v of videos) {
                         v.recognizeResult = this.parseRecognizeResult(v.recognizeResult);
                         console.log(v.recognizeResult);
-                        console.log(new Date(v.lastRecognizeTime))
                         console.log(this.minutesSinceLastRecognize)
                     }
                     this.videoList = videos;

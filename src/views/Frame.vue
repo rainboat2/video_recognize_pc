@@ -139,9 +139,9 @@
                     isLogin = false
                 return isLogin === "true";
             },
-            uploadVideo(videoFile, parentDirectoryId, callback){
+            uploadVideo(videoFileList, parentDirectoryId, callback){
                 // 调用upload-card子组件，完成对视频文件的上传
-                this.$refs['upload-card'].uploadVideo(videoFile, parentDirectoryId, callback);
+                this.$refs['upload-card'].uploadVideo(videoFileList, parentDirectoryId, callback);
             },
             goToHomePage(){
                 this.$router.push("/homepage");

@@ -146,20 +146,13 @@
                 })
             },
             handleUploadChange(event){
-                let cnt = 0;
+                const videoFileList = []
                 for (let videoFile of event.target.files){
                     // 如果名称已经存在，则重命名文件
-                    videoFile = new File([videoFile], this.renameIfSame(videoFile.name, this.files), {type: videoFile.type});
-                    // 提取封面需要一点时间，因此必须隔开一秒调用一次
-                    setTimeout(
-                        () => {
-                            this.$parent.uploadVideo(videoFile, this.currentDirectory.id, () => {this.refreshFiles()})
-                        },
-                        1000 * cnt
-                    )
-                    cnt++;
+                    videoFile = new File([videoFile], videoFile.name, {type: videoFile.type});
+                    videoFileList.push(videoFile);
                 }
-
+                this.$parent.uploadVideo(videoFileList, this.currentDirectory.id, () => {this.refreshFiles()})
                 document.getElementById('upload-button').value = '';
             },
             addDirectory(){
@@ -179,6 +172,8 @@
                         }else{
                             this.$message.warning(r.data.msg);
                         }
+                    }).catch(err => {
+                        this.$message.error(err);
                     })
                 })
             },
