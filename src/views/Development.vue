@@ -135,7 +135,7 @@
                 this.$message.info("成功拷贝到剪切板");
             },
             formatDate(date){
-                return date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDay();
+                return date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate();
             },
             getAllToken(){
                 this.axios.get(this.api.getAllTokensUrl).then(r => {
