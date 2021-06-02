@@ -10,7 +10,7 @@
                 <template v-if="isLogin()">
                     <el-avatar :src="avatarPath" :size="40"></el-avatar>
                     <el-dropdown-menu>
-                        <el-dropdown-item command="login">登陆（测试用）</el-dropdown-item>
+<!--                        <el-dropdown-item command="login">登陆（测试用）</el-dropdown-item>-->
                         <el-dropdown-item command="personalInfo">个人信息</el-dropdown-item>
                         <el-dropdown-item command="logout">注销</el-dropdown-item>
                     </el-dropdown-menu>
