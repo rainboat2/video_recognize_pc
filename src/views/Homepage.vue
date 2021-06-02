@@ -187,7 +187,8 @@
                             else                     online++;
                             i++;
                         }
-                        date.push([base.getFullYear(), base.getMonth(), base.getDate()].join('/'));
+                        // js月份默认从0开始，因此显示时要加1
+                        date.push([base.getFullYear(), base.getMonth() + 1, base.getDate()].join('/'));
                         api_data.push(api);
                         online_data.push(online);
                         base = new Date(base.getTime() + oneDay);
